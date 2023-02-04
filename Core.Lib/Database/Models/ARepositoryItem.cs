@@ -1,4 +1,5 @@
 using Core.Lib.Database.Interfaces;
+
 namespace Core.Lib.Database.Models
 {
     public abstract class ARepositoryItem : IRepositoryItem
@@ -13,11 +14,6 @@ namespace Core.Lib.Database.Models
         public string GetId() 
         {
             return Id;
-        }
-        
-        public void SetId(string id)
-        {
-            Id = id;
         }
     }
 }

@@ -4,6 +4,6 @@ namespace Core.Lib.Database.Interfaces
     {
         string Id {get; set;}
         string GetId();
-        void SetId(string id);
+        void CreateGuidId();
     }
 }
