@@ -25,7 +25,7 @@ namespace Core.Lib.Database.DbClients
                 _cacheClients.Add(databaseInfo.ConnectionString , client);
                 return client;
             }
-            catch (System.Exception)
+            catch (Exception)
             {
                 var message = $"Client Creation Error. Connection string {databaseInfo.ConnectionString}";
                 Console.WriteLine(message);
