@@ -27,32 +27,40 @@ namespace Core.ConsoleApp
             user.CreateGuidId();
             user.Name = "Mubin";
             user.Email = "anam.mubin1999@gmail.com";
-            var insert = await mongoDbContext.InsertItemAsync<UserModel>(databaseInfo, (UserModel)user);
-            Console.WriteLine($"Insert : {insert}");
+
+            IRedisCacheClient redis = new RedisCacheClient();
+            var redisDb = new DatabaseInfo();
+            redisDb.DatabaseName = "RedisDb";
+            redisDb.ConnectionString = "127.0.0.1:6379";
+            databaseInfo = redisDb;
+            redis.RegisterDbClient(redisDb);
+
+            var redisDbContext = new RedisCacheContext(redis);
+            await redisDbContext.InsertItemAsync<UserModel>(redisDb, user);
+            
+            var redisUser = await redisDbContext.GetItemByIdAsync<UserModel>(redisDb, user.Id);
+            var ser = JsonConvert.SerializeObject(redisUser);
+            Console.WriteLine($"Redis User: {ser}");
+
+            var insert = await redisDbContext.InsertItemAsync<UserModel>(databaseInfo, (UserModel)user);
+            Console.WriteLine($"Redis Insert : {insert}");
             
             var getAndUpdateId = user.GetId();
-            var get = await mongoDbContext.GetItemByIdAsync<UserModel>(databaseInfo, getAndUpdateId);
+            var get = await redisDbContext.GetItemByIdAsync<UserModel>(databaseInfo, getAndUpdateId);
             var getString = JsonConvert.SerializeObject(get);
-            Console.WriteLine($"Get : {getString}");
+            Console.WriteLine($"Redis Get : {getString}");
             
             get.Name = "Araf";
             get.Email = "aman.araf@gmail.com";
-            var update = await mongoDbContext.UpdateItemAsync<UserModel>(databaseInfo, get);
+            var update = await redisDbContext.UpdateItemAsync<UserModel>(databaseInfo, get);
             var updateString = JsonConvert.SerializeObject(get);
-            Console.WriteLine($"Update : {update}");
-            Console.WriteLine($"Update : {updateString}");
+            Console.WriteLine($"Redis Update : {update}");
+            Console.WriteLine($"Redis Update : {updateString}");
 
             var deleteId = user.GetId();
-            var delete = await mongoDbContext.DeleteItemByIdAsync<UserModel>(databaseInfo, deleteId);
-            Console.WriteLine($"Delete : {delete}");
-
-
-            var gets = await mongoDbContext.GetItemsAsync<UserModel>(databaseInfo);
-            foreach (var item in gets)
-            {
-                var itemString = JsonConvert.SerializeObject(item);
-                Console.WriteLine($"Gets : {itemString}");
-            }
+            var delete = await redisDbContext.DeleteItemByIdAsync<UserModel>(databaseInfo, deleteId);
+            Console.WriteLine($"Redis Delete : {delete}");
+            
         }
     }
 }
