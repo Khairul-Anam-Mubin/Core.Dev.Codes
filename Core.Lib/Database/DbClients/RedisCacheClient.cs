@@ -1,12 +1,15 @@
 using StackExchange.Redis;
+using System.Composition;
 using Core.Lib.Database.Interfaces;
 using Core.Lib.Database.Models;
 
 namespace Core.Lib.Database.DbClients
 {
+    [Export("RedisCacheClient", typeof(IRedisCacheClient))]
+    [Shared]
     public class RedisCacheClient : IRedisCacheClient
     {
-        private Dictionary<string, IConnectionMultiplexer> _cacheClients;
+        private Dictionary<string, IConnectionMultiplexer> _cacheClients = new Dictionary<string, IConnectionMultiplexer>();
         
         public RedisCacheClient()
         {

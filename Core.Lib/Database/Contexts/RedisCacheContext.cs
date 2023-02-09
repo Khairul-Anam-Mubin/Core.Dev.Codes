@@ -1,16 +1,21 @@
+using Newtonsoft.Json;
+using System.Composition;
 using Core.Lib.Database.Interfaces;
 using Core.Lib.Database.Models;
-using Newtonsoft.Json;
+using Core.Lib.Ioc;
 
 namespace Core.Lib.Database.Contexts
 {
+    [Export("RedisCacheContext", typeof(IRepositoryContext))]
+    [Shared]
     public class RedisCacheContext : IRepositoryContext
     {
         private readonly IRedisCacheClient _redisClient;
 
-        public RedisCacheContext(IRedisCacheClient redisClient)
+        public RedisCacheContext()
         {
-            _redisClient = redisClient;
+            //_redisClient = redisClient;
+            _redisClient = IocContainer.Instance.Resolve<IRedisCacheClient>("RedisCacheClient");
         }
 
         public async Task<bool> InsertItemAsync<T>(DatabaseInfo databaseInfo, T item) where T : class, IRepositoryItem

@@ -4,6 +4,7 @@ using Core.Lib.Database.DbClients;
 using Core.Lib.Database.Interfaces;
 using Core.ConsoleApp.Models;
 using Newtonsoft.Json;
+using Core.Lib.Ioc;
 
 namespace Core.ConsoleApp
 {
@@ -12,30 +13,28 @@ namespace Core.ConsoleApp
         public static async Task Main(string[] args)
         {
             Console.WriteLine("Hello");
-            
+            //IocContainer.Instance.AddAllAssemblies();
             var databaseInfo = new DatabaseInfo();
             databaseInfo.ConnectionString = "mongodb://localhost:27017";
             databaseInfo.DatabaseName = "TestLibDb";
 
-
-            IMongoDbClient mongoDbClient = new MongoDbClient();
+            var mongoDbClient = IocContainer.Instance.Resolve<IMongoDbClient>("MongoDbClient");
             var dbClient = mongoDbClient.RegisterDbClient(databaseInfo);
-
-            IRepositoryContext mongoDbContext = new MongoDbContext(mongoDbClient);
+            IRepositoryContext mongoDbContext = IocContainer.Instance.Resolve<IRepositoryContext>("MongoDbContext");
 
             var user = new UserModel();
             user.CreateGuidId();
             user.Name = "Mubin";
             user.Email = "anam.mubin1999@gmail.com";
 
-            IRedisCacheClient redis = new RedisCacheClient();
+            IRedisCacheClient redis = IocContainer.Instance.Resolve<IRedisCacheClient>("RedisCacheClient");
             var redisDb = new DatabaseInfo();
             redisDb.DatabaseName = "RedisDb";
             redisDb.ConnectionString = "127.0.0.1:6379";
             databaseInfo = redisDb;
             redis.RegisterDbClient(redisDb);
 
-            var redisDbContext = new RedisCacheContext(redis);
+            var redisDbContext = IocContainer.Instance.Resolve<IRepositoryContext>("RedisCacheContext");
             await redisDbContext.InsertItemAsync<UserModel>(redisDb, user);
             
             var redisUser = await redisDbContext.GetItemByIdAsync<UserModel>(redisDb, user.Id);
@@ -60,7 +59,12 @@ namespace Core.ConsoleApp
             var deleteId = user.GetId();
             var delete = await redisDbContext.DeleteItemByIdAsync<UserModel>(databaseInfo, deleteId);
             Console.WriteLine($"Redis Delete : {delete}");
-            
+            var contexts = IocContainer.Instance.ResolveMany<IRepositoryContext>().ToArray();
+            Console.WriteLine($"Contexts Count {contexts.Count()}");
+            foreach (var context in contexts)
+            {
+                Console.WriteLine($"{context.GetType()}");
+            }
         }
     }
 }

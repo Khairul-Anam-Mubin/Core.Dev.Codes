@@ -1,12 +1,15 @@
+using MongoDB.Driver;
+using System.Composition;
 using Core.Lib.Database.Models;
 using Core.Lib.Database.Interfaces;
-using MongoDB.Driver;
 
 namespace Core.Lib.Database.DbClients
 {
+    [Export("MongoDbClient", typeof(IMongoDbClient))]
+    [Shared]
     public class MongoDbClient : IMongoDbClient
     {
-        private Dictionary<string, MongoClient> _dbClients;
+        private Dictionary<string, MongoClient> _dbClients = new Dictionary<string, MongoClient>();
 
         public MongoDbClient()
         {

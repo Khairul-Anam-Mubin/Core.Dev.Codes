@@ -1,16 +1,21 @@
+using System.Composition;
+using MongoDB.Driver;
 using Core.Lib.Database.Interfaces;
 using Core.Lib.Database.Models;
-using MongoDB.Driver;
+using Core.Lib.Ioc;
 
 namespace Core.Lib.Database.Contexts
 {
+    [Export("MongoDbContext", typeof(IRepositoryContext))]
+    [Shared]
     public class MongoDbContext : IRepositoryContext
     {
         private readonly IMongoDbClient _mongoDbClient;
         
-        public MongoDbContext(IMongoDbClient mongoDbClient)
+        public MongoDbContext()
         {
-            _mongoDbClient = mongoDbClient;
+           // _mongoDbClient = mongoDbClient;
+            _mongoDbClient = IocContainer.Instance.Resolve<IMongoDbClient>("MongoDbClient");
         }
         
         public async Task<bool> InsertItemAsync<T>(DatabaseInfo databaseInfo, T item) where T : class, IRepositoryItem
