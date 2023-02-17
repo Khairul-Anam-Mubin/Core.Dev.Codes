@@ -5,14 +5,17 @@ using Core.Lib.Database.Interfaces;
 using Core.ConsoleApp.Models;
 using Newtonsoft.Json;
 using Core.Lib.Ioc;
-
+using Core.Lib.Authentication;
 namespace Core.ConsoleApp
 {
     public static class Program
     {
         public static async Task Main(string[] args)
         {
-            Console.WriteLine("Hello");
+            // Console.WriteLine("Hello");
+            // var tokenService = new TokenService();
+            // var token = tokenService.GenerateJwtToken("lamia", "mubin", "mubin", 10);
+            // tokenService.GetClaims(token);
             //IocContainer.Instance.AddAllAssemblies();
             var databaseInfo = new DatabaseInfo();
             databaseInfo.ConnectionString = "mongodb://localhost:27017";
