@@ -3,7 +3,7 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
 
-namespace Core.Lib.Authentication
+namespace Core.Lib.Authentication.Services
 {
     public class TokenService
     {
