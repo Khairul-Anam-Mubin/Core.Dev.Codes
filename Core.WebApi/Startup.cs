@@ -17,9 +17,6 @@ namespace Core.WebApi
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddControllers();
-            services.AddSwaggerGen();
-
             services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -34,11 +31,13 @@ namespace Core.WebApi
                     ValidateIssuerSigningKey = true,
 
                     ClockSkew = TimeSpan.Zero,
-                    ValidIssuer = "",
-                    ValidAudience = "",
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF32.GetBytes("SecurityKey"))
+                    ValidIssuer = "issuer",
+                    ValidAudience = "audience",
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF32.GetBytes("SecretKey"))
                 };
             });
+            services.AddControllers();
+            services.AddSwaggerGen();
         }
 
         public void Configure(IApplicationBuilder app)

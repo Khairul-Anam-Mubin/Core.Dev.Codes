@@ -22,6 +22,11 @@ namespace Core.Lib.Authentication.Services
             var token = new JwtSecurityTokenHandler().WriteToken(tokenOptions);
             return token;
         }
+
+        public string GenerateRefreshToken()
+        {
+            return Guid.NewGuid().ToString();
+        }
         public List<Claim> GetClaims(string token)
         {
             var jwtSecurityToken = new JwtSecurityTokenHandler().ReadJwtToken(token);

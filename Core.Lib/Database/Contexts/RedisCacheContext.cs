@@ -3,6 +3,7 @@ using System.Composition;
 using Core.Lib.Database.Interfaces;
 using Core.Lib.Database.Models;
 using Core.Lib.Ioc;
+using MongoDB.Driver;
 
 namespace Core.Lib.Database.Contexts
 {
@@ -95,6 +96,11 @@ namespace Core.Lib.Database.Contexts
                 Console.WriteLine("Problem Get Item");
                 return null;
             }
+        }
+
+        Task<T> IRepositoryContext.GetItemByFilterDefinitionAsync<T>(DatabaseInfo databaseInfo, FilterDefinition<T> filterDefinition)
+        {
+            throw new NotImplementedException();
         }
     }
 }

@@ -1,4 +1,5 @@
 using System.Composition;
+using Core.Lib.Database.DbClients;
 using MongoDB.Driver;
 using Core.Lib.Database.Interfaces;
 using Core.Lib.Database.Models;
@@ -15,7 +16,7 @@ namespace Core.Lib.Database.Contexts
         public MongoDbContext()
         {
            // _mongoDbClient = mongoDbClient;
-            _mongoDbClient = IocContainer.Instance.Resolve<IMongoDbClient>("MongoDbClient");
+           _mongoDbClient = new MongoDbClient();
         }
         
         public async Task<bool> InsertItemAsync<T>(DatabaseInfo databaseInfo, T item) where T : class, IRepositoryItem
@@ -93,6 +94,21 @@ namespace Core.Lib.Database.Contexts
             catch (Exception)
             {
                 Console.WriteLine("Problem Get Items");
+                return null;
+            }
+        }
+
+        public async Task<T> GetItemByFilterDefinitionAsync<T>(DatabaseInfo databaseInfo, FilterDefinition<T> filterDefinition) where T : class, IRepositoryItem
+        {
+            try
+            {
+                var collection = _mongoDbClient.GetCollection<T>(databaseInfo);
+                var item = await collection.FindAsync<T>(filterDefinition);
+                return await item.FirstOrDefaultAsync<T>();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
                 return null;
             }
         }
