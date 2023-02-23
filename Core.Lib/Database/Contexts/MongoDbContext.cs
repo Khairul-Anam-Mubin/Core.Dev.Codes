@@ -16,7 +16,7 @@ namespace Core.Lib.Database.Contexts
         public MongoDbContext()
         {
            // _mongoDbClient = mongoDbClient;
-           _mongoDbClient = new MongoDbClient();
+           _mongoDbClient = IocContainer.Instance.Resolve<IMongoDbClient>();
         }
         
         public async Task<bool> InsertItemAsync<T>(DatabaseInfo databaseInfo, T item) where T : class, IRepositoryItem

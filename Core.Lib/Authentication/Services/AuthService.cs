@@ -5,6 +5,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 using Core.Lib.Authentication.Models;
+using Core.Lib.Ioc;
 
 namespace Core.Lib.Authentication.Services
 {
@@ -16,7 +17,7 @@ namespace Core.Lib.Authentication.Services
         public AuthService()
         {
             _tokenService = new TokenService();
-            _userService = new UserService();
+            _userService = IocContainer.Instance.Resolve<UserService>();
         }
 
         public async Task<TokenDto> GetTokenDtoAsync(LogInDto loginDto)

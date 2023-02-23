@@ -7,6 +7,7 @@ using Core.Lib.Authentication.Models;
 using Core.Lib.Database.Contexts;
 using Core.Lib.Database.Interfaces;
 using Core.Lib.Database.Models;
+using Core.Lib.Ioc;
 using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 
@@ -16,15 +17,17 @@ namespace Core.Lib.Authentication.Services
     {
         private readonly IRepositoryContext _repositoryContext;
         private readonly DatabaseInfo _databaseInfo;
-        
+        private readonly IMongoDbClient _mongoDbClient;
         public UserService()
         {
-            _repositoryContext = new MongoDbContext();
+            _repositoryContext = IocContainer.Instance.Resolve<IRepositoryContext>("MongoDbContext");
+            _mongoDbClient = IocContainer.Instance.Resolve<IMongoDbClient>();
             _databaseInfo = new DatabaseInfo()
             {
                 DatabaseName = "IdentityDb",
                 ConnectionString = "mongodb://localhost:27017"
             };
+            _mongoDbClient.RegisterDbClient(_databaseInfo);
         }
         
         public async Task<bool> CreateUserAsync(UserModel userModel)
