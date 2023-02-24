@@ -4,7 +4,9 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using Core.Lib.Authentication.Helpers;
 using Core.Lib.Authentication.Models;
+using Core.Lib.Authentication.Repository;
 using Core.Lib.Ioc;
 
 namespace Core.Lib.Authentication.Services
@@ -13,11 +15,15 @@ namespace Core.Lib.Authentication.Services
     {
         private readonly TokenService _tokenService;
         private readonly UserService _userService;
-        
+        private readonly TokenHelper _tokenHelper;
+        private readonly AuthRepository _authRepository;
+
         public AuthService()
         {
-            _tokenService = new TokenService();
+            _tokenService = IocContainer.Instance.Resolve<TokenService>();
             _userService = IocContainer.Instance.Resolve<UserService>();
+            _tokenHelper = IocContainer.Instance.Resolve<TokenHelper>();
+            _authRepository = IocContainer.Instance.Resolve<AuthRepository>();
         }
 
         public async Task<TokenDto> GetTokenDtoAsync(LogInDto loginDto)
@@ -28,19 +34,28 @@ namespace Core.Lib.Authentication.Services
             claims.Add(new Claim("UserName", loginDto.UserName));
             claims.Add(new Claim("jti", Guid.NewGuid().ToString()));
             
-            var accessToken = _tokenService.GenerateJwtToken("SecretKey", "issuer", "audience", 100, claims);
-            var refreshToken = _tokenService.GenerateRefreshToken();
+            var accessToken = _tokenHelper.GenerateJwtToken("SecretKey", "issuer", "audience", 100, claims);
+            var refreshToken = _tokenHelper.GenerateRefreshToken();
+            var email = loginDto.Email;
             
-            return await Task.FromResult(new TokenDto()
+            var tokenModel = new TokenModel
             {
                 AccessToken = accessToken,
-                RefreshToken = refreshToken
-            });
+                RefreshToken = refreshToken,
+                Email = email,
+                CreatedAt = DateTime.Now
+            };
+            tokenModel.CreateGuidId();
+            
+            await _authRepository.SaveTokenModelAsync(tokenModel);
+
+            return await Task.FromResult(tokenModel.ToTokenDto());
         }
 
         public async Task<ResponseDto>CanLogInAsync(LogInDto logInDto)
         {
             var response = new ResponseDto();
+            
             if (string.IsNullOrEmpty(logInDto.Email) || string.IsNullOrEmpty(logInDto.Password))
             {
                 response.Status = "Failed";
@@ -49,6 +64,7 @@ namespace Core.Lib.Authentication.Services
             }
 
             var canLogIn = await _userService.IsUserExistAsync(logInDto);
+
             if (canLogIn == false)
             {
                 response.Status = "Failed";
@@ -56,7 +72,7 @@ namespace Core.Lib.Authentication.Services
             }
 
             response.Status = "Success";
-            response.Message = "Email and Password matched";
+            response.Message = "Login Successfully";
 
             return response;
         }
@@ -78,6 +94,31 @@ namespace Core.Lib.Authentication.Services
                 Message = "Register Error",
                 Status = "Failed"
             });
+        }
+
+        public async Task<TokenDto> GetRefreshTokenAsync(TokenDto tokenDto)
+        {
+            var tokenModel = await _authRepository.GetTokenModelByRefreshTokenAsync(tokenDto.RefreshToken);
+
+            if (tokenModel != null)
+            {
+                if (tokenModel.Suspicious == true)
+                {
+                    return new TokenDto
+                    {
+                        Status = "Failed",
+                        Message = "Token Suspicious"
+                    };
+                }
+                // change refresh and access token
+                await _authRepository.SaveTokenModelAsync(tokenModel);
+                return tokenModel.ToTokenDto();
+            }
+            return new TokenDto
+            {
+                Status = "Failed",
+                Message = "Refresh token already invalidated"
+            };
         }
     }
 }

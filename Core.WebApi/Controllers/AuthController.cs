@@ -22,10 +22,10 @@ namespace Core.WebApi.Controllers
         [Route("login")]
         public async Task<IActionResult> LogInAsync(LogInDto loginDto)
         {
-            var canLogIn = await _authService.CanLogInAsync(loginDto);
-            if (canLogIn.Status == "Failed")
+            var logInResponse = await _authService.CanLogInAsync(loginDto);
+            if (logInResponse.Status == "Failed")
             {
-                return Ok(canLogIn);
+                return Ok(logInResponse);
             }
             return Ok(await _authService.GetTokenDtoAsync(loginDto));
         }
@@ -35,6 +35,13 @@ namespace Core.WebApi.Controllers
         public async Task<IActionResult> RegisterAsync(UserModel userModel)
         {
             return await Task.FromResult(Ok(await _authService.RegisterAsync(userModel)));
+        }
+
+        [HttpPost]
+        [Route("token")]
+        public async Task<IActionResult> GetRefreshTokenAsync(TokenDto tokenDto)
+        {
+            return await Task.FromResult(Ok(await _authService.GetRefreshTokenAsync(tokenDto)));
         }
 
         [Authorize]

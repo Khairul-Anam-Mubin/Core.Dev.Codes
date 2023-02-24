@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Core.Lib.Authentication.Models
 {
-    public class TokenDto
+    public class TokenDto : ResponseDto
     {
         public string AccessToken { get; set; }
         public string RefreshToken { get; set; }

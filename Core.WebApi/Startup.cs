@@ -1,4 +1,6 @@
 ﻿using System.Text;
+using Core.Lib.Authentication.Helpers;
+using Core.Lib.Authentication.Repository;
 using Core.Lib.Authentication.Services;
 using Core.Lib.Database.Contexts;
 using Core.Lib.Database.DbClients;
@@ -43,8 +45,12 @@ namespace Core.WebApi
             });
             services.AddControllers();
             services.AddSwaggerGen();
-            services.AddSingleton<IRepositoryContext, MongoDbContext>();
+            
             services.AddSingleton<IMongoDbClient, MongoDbClient>();
+            services.AddSingleton<IRepositoryContext, MongoDbContext>();
+            services.AddSingleton<TokenService>();
+            services.AddSingleton<TokenHelper>();
+            services.AddSingleton<AuthRepository>();
             services.AddSingleton<UserService>();
             IocContainer.Instance.ServiceProvider = services.BuildServiceProvider();
         }
