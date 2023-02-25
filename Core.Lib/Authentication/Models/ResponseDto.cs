@@ -8,7 +8,7 @@ namespace Core.Lib.Authentication.Models
 {
     public class ResponseDto
     {
-        public string Message { get; set; }
-        public string Status { get; set; }
+        public string? Message { get; set; }
+        public string? Status { get; set; }
     }
 }

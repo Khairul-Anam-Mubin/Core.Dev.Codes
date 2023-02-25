@@ -1,5 +1,6 @@
 ﻿using Core.Lib.Authentication.Models;
 using Core.Lib.Authentication.Services;
+using Core.Lib.Ioc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -15,7 +16,7 @@ namespace Core.WebApi.Controllers
         
         public AuthController()
         {
-            _authService = new AuthService();
+            _authService = IocContainer.Instance.Resolve<AuthService>();
         }
 
         [HttpPost]
@@ -25,23 +26,36 @@ namespace Core.WebApi.Controllers
             var logInResponse = await _authService.CanLogInAsync(loginDto);
             if (logInResponse.Status == "Failed")
             {
-                return Ok(logInResponse);
+                return Unauthorized(logInResponse);
             }
-            return Ok(await _authService.GetTokenDtoAsync(loginDto));
+            return Ok(await _authService.LogInAsync(loginDto));
         }
         
         [HttpPost]
-        [Route("register")]
-        public async Task<IActionResult> RegisterAsync(UserModel userModel)
+        [Route("logout")]
+        public async Task<IActionResult> LogOutAsync(LogOutDto logOutDto)
         {
-            return await Task.FromResult(Ok(await _authService.RegisterAsync(userModel)));
+            var logOutResponse = await _authService.LogOutAsync(logOutDto);
+            return Forbid(logOutResponse.Message);
         }
 
         [HttpPost]
         [Route("token")]
         public async Task<IActionResult> GetRefreshTokenAsync(TokenDto tokenDto)
         {
-            return await Task.FromResult(Ok(await _authService.GetRefreshTokenAsync(tokenDto)));
+            var refreshTokenResponse = await _authService.CanGetRefreshTokenAsync(tokenDto);
+            if (refreshTokenResponse.Status == "Failed")
+            {
+                return Unauthorized(refreshTokenResponse);
+            }
+            return Ok(await _authService.GetRefreshTokenAsync(tokenDto));
+        }
+
+        [HttpPost]
+        [Route("register")]
+        public async Task<IActionResult> RegisterAsync(UserModel userModel)
+        {
+            return await Task.FromResult(Ok(await _authService.RegisterAsync(userModel)));
         }
 
         [Authorize]

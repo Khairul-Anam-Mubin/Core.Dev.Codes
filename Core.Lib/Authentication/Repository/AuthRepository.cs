@@ -15,22 +15,33 @@ namespace Core.Lib.Authentication.Repository
 
         public AuthRepository(IConfiguration configuration)
         {
-            _databaseInfo = configuration.GetValue<DatabaseInfo>("DatabaseInfo");
-            _mongoDbClient = IocContainer.Instance.Resolve<IMongoDbClient>();
+            _databaseInfo = configuration.GetSection("DatabaseInfo").Get<DatabaseInfo>();
+            _mongoDbClient = IocContainer.Instance.Resolve<IMongoDbClient>("MongoDbClient");
             _context = IocContainer.Instance.Resolve<IRepositoryContext>("MongoDbContext");
             _mongoDbClient.RegisterDbClient(_databaseInfo);
         }
 
         public async Task<bool> SaveTokenModelAsync(TokenModel tokenModel)
         {
-           return await _context.InsertItemAsync(_databaseInfo, tokenModel);
+           return await _context.SaveItemAsync(_databaseInfo, tokenModel);
         }
 
         public async Task<TokenModel> GetTokenModelByRefreshTokenAsync(string refreshToken)
         {
-            var filter = Builders<TokenModel>.Filter.Eq("RefreshToken", refreshToken);
-            var tokenModel = await _context.GetItemByFilterDefinitionAsync<TokenModel>(_databaseInfo, filter);
+            var tokenModel = await _context.GetItemByIdAsync<TokenModel>(_databaseInfo, refreshToken);
             return tokenModel;
+        }
+
+        public async Task<bool> DeleteAllTokenByEmailAsync(string email)
+        {
+            var filter = Builders<TokenModel>.Filter.Eq("Email", email);
+            return await _context.DeleteItemsByFilterDefinitionAsync(_databaseInfo, filter);
+        }
+
+        public async Task<bool> DeleteAllTokenByAppIdAsync(string appId)
+        {
+            var filter = Builders<TokenModel>.Filter.Eq("AppId", appId);
+            return await _context.DeleteItemsByFilterDefinitionAsync(_databaseInfo, filter);
         }
     }
 }

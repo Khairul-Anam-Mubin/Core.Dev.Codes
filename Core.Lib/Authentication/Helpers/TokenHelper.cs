@@ -49,5 +49,15 @@ namespace Core.Lib.Authentication.Helpers
             var jwtToken = new JwtSecurityToken(token);
             return (jwtToken == null) || (jwtToken.ValidFrom > DateTime.UtcNow) || (jwtToken.ValidTo < DateTime.UtcNow);
         }
+        // public bool IsTokenValid(string token)
+        // {
+        //     var validateParameter = new TokenValidationParameters
+        //     {
+        //         ValidIssuer = "",
+        //         ValidAudience = "",
+        //         IssuerSigningKey = new SymmetricSecurityKey(),
+
+        //     };
+        // }
     }
 }

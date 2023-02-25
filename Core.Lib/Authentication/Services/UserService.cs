@@ -8,6 +8,7 @@ using Core.Lib.Database.Contexts;
 using Core.Lib.Database.Interfaces;
 using Core.Lib.Database.Models;
 using Core.Lib.Ioc;
+using Microsoft.Extensions.Configuration;
 using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 
@@ -18,15 +19,12 @@ namespace Core.Lib.Authentication.Services
         private readonly IRepositoryContext _repositoryContext;
         private readonly DatabaseInfo _databaseInfo;
         private readonly IMongoDbClient _mongoDbClient;
-        public UserService()
+        
+        public UserService(IConfiguration configuration)
         {
             _repositoryContext = IocContainer.Instance.Resolve<IRepositoryContext>("MongoDbContext");
             _mongoDbClient = IocContainer.Instance.Resolve<IMongoDbClient>();
-            _databaseInfo = new DatabaseInfo()
-            {
-                DatabaseName = "IdentityDb",
-                ConnectionString = "mongodb://localhost:27017"
-            };
+            _databaseInfo = _databaseInfo = configuration.GetSection("DatabaseInfo").Get<DatabaseInfo>();
             _mongoDbClient.RegisterDbClient(_databaseInfo);
         }
         

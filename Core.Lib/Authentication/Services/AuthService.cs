@@ -8,48 +8,147 @@ using Core.Lib.Authentication.Helpers;
 using Core.Lib.Authentication.Models;
 using Core.Lib.Authentication.Repository;
 using Core.Lib.Ioc;
+using Microsoft.Extensions.Configuration;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace Core.Lib.Authentication.Services
 {
     public class AuthService
     {
-        private readonly TokenService _tokenService;
         private readonly UserService _userService;
         private readonly TokenHelper _tokenHelper;
         private readonly AuthRepository _authRepository;
+        private readonly IConfiguration _configuration;
 
-        public AuthService()
+        public AuthService(IConfiguration configuration)
         {
-            _tokenService = IocContainer.Instance.Resolve<TokenService>();
+            _configuration = configuration;
             _userService = IocContainer.Instance.Resolve<UserService>();
             _tokenHelper = IocContainer.Instance.Resolve<TokenHelper>();
             _authRepository = IocContainer.Instance.Resolve<AuthRepository>();
         }
 
-        public async Task<TokenDto> GetTokenDtoAsync(LogInDto loginDto)
+        public async Task<ResponseDto> RegisterAsync(UserModel userModel)
         {
-            
-            var claims = new List<Claim>();
-            claims.Add(new Claim("Email", loginDto.Email));
-            claims.Add(new Claim("UserName", loginDto.UserName));
-            claims.Add(new Claim("jti", Guid.NewGuid().ToString()));
-            
-            var accessToken = _tokenHelper.GenerateJwtToken("SecretKey", "issuer", "audience", 100, claims);
-            var refreshToken = _tokenHelper.GenerateRefreshToken();
-            var email = loginDto.Email;
-            
-            var tokenModel = new TokenModel
+            userModel.CreateGuidId();
+            if (await _userService.CreateUserAsync(userModel))
             {
-                AccessToken = accessToken,
-                RefreshToken = refreshToken,
-                Email = email,
-                CreatedAt = DateTime.Now
+                return await Task.FromResult(new ResponseDto
+                {
+                    Message = "Register successfully",
+                    Status = "Success"
+                });
+            }
+
+            return await Task.FromResult(new ResponseDto
+            {
+                Message = "Register Error",
+                Status = "Failed"
+            });
+        }
+
+        public async Task<ResponseDto> LogOutAsync(LogOutDto logOutDto)
+        {
+            if (await RevokeAllTokenByAppIdAsync(logOutDto.AppId))
+            {
+                return new ResponseDto
+                {
+                    Status = "Success",
+                    Message = "Logged out successfully"
+                };
+            }
+            return new ResponseDto
+            {
+                Status = "Failed",
+                Message = "Logout error"
             };
-            tokenModel.CreateGuidId();
+        }
+        
+        public async Task<bool> RevokeAllTokenByAppIdAsync(string appId)
+        {
+            return await _authRepository.DeleteAllTokenByAppIdAsync(appId);
+        }
+
+        public async Task<ResponseDto> CanGetRefreshTokenAsync(TokenDto tokenDto)
+        {
+            var tokenModel = await _authRepository.GetTokenModelByRefreshTokenAsync(tokenDto.RefreshToken);
+
+            if (tokenModel == null || tokenModel.AccessToken != tokenDto.AccessToken)
+            {
+                return new ResponseDto
+                {
+                    Status = "Failed",
+                    Message = "Refresh or Access Token error"
+                };
+            }
+            
+            var email = GetEmailByAccessToken(tokenDto.AccessToken);
+            var appId = tokenDto.AppId;
+
+            if (tokenModel.AppId != appId)
+            {
+                return new ResponseDto
+                {
+                    Status = "Failed",
+                    Message = "AppId problem"
+                };
+            }
+
+            if (tokenModel.Expired == true)
+            {
+                await RevokeAllTokenByEmailAsync(email);
+                return new ResponseDto
+                {
+                    Status = "Failed",
+                    Message = "Suspicious Token refresh attempt"
+                };
+            }
+
+            tokenModel.Expired = true;
+            await _authRepository.SaveTokenModelAsync(tokenModel);
+            
+            return new ResponseDto
+            {
+                Status = "Success",
+                Message = "Refresh token can get"
+            };
+        }
+
+        public async Task<TokenDto> GetRefreshTokenAsync(TokenDto tokenDto)
+        {
+            var email = GetEmailByAccessToken(tokenDto.AccessToken);
+            var appId = tokenDto.AppId;
+
+            var refreshTokenModel = await GenerateTokenModelAsync(email, appId);
+            await _authRepository.SaveTokenModelAsync(refreshTokenModel);
+            
+            var newTokenDto = refreshTokenModel.ToTokenDto();
+            newTokenDto.Status = "Success";
+            newTokenDto.Message = "Token Generated";
+
+            return newTokenDto;
+        }
+
+        public string GetEmailByAccessToken(string accessToken)
+        {
+            var claims = _tokenHelper.GetClaims(accessToken);
+            var emailClaim = claims.FirstOrDefault(x => x.Type == JwtRegisteredClaimNames.Email);
+            if (emailClaim == null) return string.Empty;
+            return _tokenHelper.GetClaimValue(emailClaim);
+        }
+
+        public async Task<bool> RevokeAllTokenByEmailAsync(string email)
+        {
+            return await _authRepository.DeleteAllTokenByEmailAsync(email);
+        }
+
+        public async Task<TokenDto> LogInAsync(LogInDto loginDto)
+        {
+            var tokenModel = await GenerateTokenModelAsync(loginDto.Email, loginDto.AppId);
             
             await _authRepository.SaveTokenModelAsync(tokenModel);
 
-            return await Task.FromResult(tokenModel.ToTokenDto());
+            return tokenModel.ToTokenDto();
         }
 
         public async Task<ResponseDto>CanLogInAsync(LogInDto logInDto)
@@ -77,48 +176,34 @@ namespace Core.Lib.Authentication.Services
             return response;
         }
 
-        public async Task<ResponseDto> RegisterAsync(UserModel userModel)
+        public async Task<TokenModel> GenerateTokenModelAsync(string email, string appId)
         {
-            userModel.CreateGuidId();
-            if (await _userService.CreateUserAsync(userModel))
+            var claims = await GetClaimsByEmailAsync(email);
+            
+            var accessToken = _tokenHelper.GenerateJwtToken(_configuration["JWT:SecretKey"], _configuration["JWT:Issuer"], _configuration["JWT:Audience"], int.Parse(_configuration["JWT:ExpirationTimeInSec"]), claims);
+            var refreshToken = _tokenHelper.GenerateRefreshToken();
+            
+            var tokenModel = new TokenModel
             {
-                return await Task.FromResult(new ResponseDto
-                {
-                    Message = "Register successfully",
-                    Status = "Success"
-                });
-            }
+                AppId = appId,
+                AccessToken = accessToken,
+                Email = email,
+                CreatedAt = DateTime.Now
+            };
+            tokenModel.CreateGuidId();
 
-            return await Task.FromResult(new ResponseDto
-            {
-                Message = "Register Error",
-                Status = "Failed"
-            });
+            return tokenModel;
         }
 
-        public async Task<TokenDto> GetRefreshTokenAsync(TokenDto tokenDto)
+        public async Task<List<Claim>> GetClaimsByEmailAsync(string email)
         {
-            var tokenModel = await _authRepository.GetTokenModelByRefreshTokenAsync(tokenDto.RefreshToken);
-
-            if (tokenModel != null)
-            {
-                if (tokenModel.Suspicious == true)
-                {
-                    return new TokenDto
-                    {
-                        Status = "Failed",
-                        Message = "Token Suspicious"
-                    };
-                }
-                // change refresh and access token
-                await _authRepository.SaveTokenModelAsync(tokenModel);
-                return tokenModel.ToTokenDto();
-            }
-            return new TokenDto
-            {
-                Status = "Failed",
-                Message = "Refresh token already invalidated"
-            };
+            var claims = new List<Claim>(); // will get from user access model later
+            
+            // custom claims
+            claims.Add(new Claim(JwtRegisteredClaimNames.Email, email));
+            claims.Add(new Claim(JwtRegisteredClaimNames.Jti , Guid.NewGuid().ToString()));
+            
+            return await Task.FromResult(claims);
         }
     }
 }

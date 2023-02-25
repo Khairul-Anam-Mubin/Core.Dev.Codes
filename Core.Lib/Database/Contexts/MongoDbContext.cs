@@ -4,6 +4,7 @@ using MongoDB.Driver;
 using Core.Lib.Database.Interfaces;
 using Core.Lib.Database.Models;
 using Core.Lib.Ioc;
+using Newtonsoft.Json;
 
 namespace Core.Lib.Database.Contexts
 {
@@ -25,11 +26,31 @@ namespace Core.Lib.Database.Contexts
             {
                 var collection = _mongoDbClient.GetCollection<T>(databaseInfo);
                 await collection.InsertOneAsync(item);
+                Console.WriteLine($"Insert Successfully, Item : {JsonConvert.SerializeObject(item)}\n");
                 return true;
             }
             catch (Exception)
             {
-                Console.WriteLine("Problem Insert Item");
+                Console.WriteLine($"Problem Insert Item : {JsonConvert.SerializeObject(item)}\n");
+                return false;
+            }
+        }
+        
+        public async Task<bool> SaveItemAsync<T>(DatabaseInfo databaseInfo, T item) where T : class, IRepositoryItem
+        {
+            try
+            {
+                var collection = _mongoDbClient.GetCollection<T>(databaseInfo);
+                var filter = Builders<T>.Filter.Eq("Id", item.GetId());
+                await collection.ReplaceOneAsync(filter, item, new ReplaceOptions {
+                    IsUpsert = true
+                });
+                Console.WriteLine($"Successfully Save Item : {JsonConvert.SerializeObject(item)}\n");
+                return true;
+            }
+            catch (Exception)
+            {
+                Console.WriteLine($"Problem Save Item : {JsonConvert.SerializeObject(item)}\n");
                 return false;
             }
         }
@@ -41,11 +62,12 @@ namespace Core.Lib.Database.Contexts
                 var collection = _mongoDbClient.GetCollection<T>(databaseInfo);
                 var filter = Builders<T>.Filter.Eq("Id", item.GetId());
                 await collection.ReplaceOneAsync(filter, item);
+                Console.WriteLine($"Successfully Update Item : {JsonConvert.SerializeObject(item)}\n");
                 return true;
             }
             catch (Exception)
             {
-                Console.WriteLine("Problem Update Item");
+                Console.WriteLine($"Problem Update Item : {JsonConvert.SerializeObject(item)}\n");
                 return false;
             }
         }
@@ -56,12 +78,13 @@ namespace Core.Lib.Database.Contexts
             {
                 var collection = _mongoDbClient.GetCollection<T>(databaseInfo);
                 var filter = Builders<T>.Filter.Eq("Id", id);
-                await collection.DeleteOneAsync(filter);
-                return true;
+                var res = await collection.DeleteOneAsync(filter);
+                Console.WriteLine($"Successfully Item Deleted, Id: {JsonConvert.SerializeObject(id)}\n");
+                return res == null? false : res.DeletedCount > 0;
             }
             catch (Exception)
             {
-                Console.WriteLine("Problem Delete Item");
+                Console.WriteLine($"Problem Delete Item, Id : {JsonConvert.SerializeObject(id)}\n");
                 return false;
             }
         }
@@ -73,11 +96,13 @@ namespace Core.Lib.Database.Contexts
                 var collection = _mongoDbClient.GetCollection<T>(databaseInfo);
                 var filter = Builders<T>.Filter.Eq("Id", id);
                 var items = await collection.FindAsync<T>(filter);
-                return await items.FirstOrDefaultAsync<T>();
+                var item = await items.FirstOrDefaultAsync<T>();
+                Console.WriteLine($"Successfully Get Item : {JsonConvert.SerializeObject(item)}\n");
+                return item;
             }
             catch (Exception)
             {
-                Console.WriteLine("Problem Get Item");
+                Console.WriteLine($"Problem Get Item, id : {id}\n");
                 return null;
             }
         }
@@ -88,12 +113,14 @@ namespace Core.Lib.Database.Contexts
             {
                 var collection = _mongoDbClient.GetCollection<T>(databaseInfo);
                 var filter = Builders<T>.Filter.Empty;
-                var items = await collection.FindAsync<T>(filter);
-                return await items.ToListAsync<T>();
+                var itemsCursor = await collection.FindAsync<T>(filter);
+                var items = await itemsCursor.ToListAsync<T>();
+                Console.WriteLine($"Successfully Get items, Count: {JsonConvert.SerializeObject(items.Count)}\n");
+                return items;
             }
             catch (Exception)
             {
-                Console.WriteLine("Problem Get Items");
+                Console.WriteLine($"Problem Get Items\n");
                 return null;
             }
         }
@@ -103,13 +130,31 @@ namespace Core.Lib.Database.Contexts
             try
             {
                 var collection = _mongoDbClient.GetCollection<T>(databaseInfo);
-                var item = await collection.FindAsync<T>(filterDefinition);
-                return await item.FirstOrDefaultAsync<T>();
+                var items = await collection.FindAsync<T>(filterDefinition);
+                var item = await items.FirstOrDefaultAsync<T>();
+                 Console.WriteLine($"Successfully Get Item by filter : {JsonConvert.SerializeObject(item)}\n");
+                return item;
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
+                Console.WriteLine($"Problem Get Item by fiter \n");
                 return null;
+            }
+        }
+
+        public async Task<bool> DeleteItemsByFilterDefinitionAsync<T>(DatabaseInfo databaseInfo, FilterDefinition<T> filterDefinition) where T : class, IRepositoryItem
+        {
+            try
+            {
+                var collection = _mongoDbClient.GetCollection<T>(databaseInfo);
+                var res = await collection.DeleteManyAsync(filterDefinition);
+                Console.WriteLine($"Successfully Delete Items, count : {JsonConvert.SerializeObject(res?.DeletedCount)}\n");
+                return res == null? false : res.DeletedCount > 0;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Problem Delete Items by fiter \n");
+                return false;
             }
         }
     }

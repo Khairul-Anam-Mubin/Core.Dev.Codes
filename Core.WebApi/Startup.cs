@@ -38,21 +38,23 @@ namespace Core.WebApi
                     ValidateIssuerSigningKey = true,
 
                     ClockSkew = TimeSpan.Zero,
-                    ValidIssuer = "issuer",
-                    ValidAudience = "audience",
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF32.GetBytes("SecretKey"))
+                    ValidIssuer = Configuration["JWT:Issuer"],
+                    ValidAudience = Configuration["JWT:Audience"],
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF32.GetBytes(Configuration["JWT:SecretKey"]))
                 };
             });
             services.AddControllers();
             services.AddSwaggerGen();
-            
+
             services.AddSingleton<IMongoDbClient, MongoDbClient>();
             services.AddSingleton<IRepositoryContext, MongoDbContext>();
-            services.AddSingleton<TokenService>();
-            services.AddSingleton<TokenHelper>();
             services.AddSingleton<AuthRepository>();
+            services.AddSingleton<TokenHelper>();
+            services.AddSingleton<AuthService>();
             services.AddSingleton<UserService>();
+            
             IocContainer.Instance.ServiceProvider = services.BuildServiceProvider();
+            //var dbClient = IocContainer.Instance.Resolve<IMongoDbClient>("MongoDbClient");
         }
 
         public void Configure(IApplicationBuilder app)
