@@ -30,7 +30,7 @@ namespace Core.Lib.Authentication.Services
         
         public async Task<bool> CreateUserAsync(UserModel userModel)
         {
-            return await _repositoryContext.InsertItemAsync(_databaseInfo, userModel);
+            return await _repositoryContext.SaveItemAsync(_databaseInfo, userModel);
         }
 
         public async Task<bool> IsUserExistAsync(LogInDto logInDto)

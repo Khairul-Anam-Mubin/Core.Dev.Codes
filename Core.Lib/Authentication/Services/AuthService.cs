@@ -223,7 +223,7 @@ namespace Core.Lib.Authentication.Services
                 AppId = appId,
                 AccessToken = accessToken,
                 Email = email,
-                CreatedAt = DateTime.Now
+                CreatedAt = DateTime.UtcNow
             };
             tokenModel.CreateGuidId();
 
