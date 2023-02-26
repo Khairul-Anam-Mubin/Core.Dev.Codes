@@ -10,6 +10,7 @@ using Core.Lib.Authentication.Repository;
 using Core.Lib.Ioc;
 using Microsoft.Extensions.Configuration;
 using System.IdentityModel.Tokens.Jwt;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Core.Lib.Authentication.Services
 {
@@ -69,8 +70,42 @@ namespace Core.Lib.Authentication.Services
             return await _authRepository.DeleteAllTokenByAppIdAsync(appId);
         }
 
+        public TokenValidationParameters GetTokenValidationParameters()
+        {
+            return new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = false,
+                ValidateIssuerSigningKey = true,
+
+                ClockSkew = TimeSpan.Zero,
+                ValidIssuer = _configuration["JWT:Issuer"],
+                ValidAudience = _configuration["JWT:Audience"],
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF32.GetBytes(_configuration["JWT:SecretKey"]))
+            };
+        }
+
         public async Task<ResponseDto> CanGetRefreshTokenAsync(TokenDto tokenDto)
         {
+            if (_tokenHelper.IsTokenValid(tokenDto.AccessToken, GetTokenValidationParameters()) == false)
+            {
+                return new ResponseDto
+                {
+                    Status = "Failed",
+                    Message = "Access token not valid"
+                };
+            }
+
+            if (_tokenHelper.IsExpired(tokenDto.AccessToken) == false)
+            {
+                return new ResponseDto
+                {
+                    Status = "Ignored",
+                    Message = "Access token not expired yet"
+                };
+            }
+
             var tokenModel = await _authRepository.GetTokenModelByRefreshTokenAsync(tokenDto.RefreshToken);
 
             if (tokenModel == null || tokenModel.AccessToken != tokenDto.AccessToken)

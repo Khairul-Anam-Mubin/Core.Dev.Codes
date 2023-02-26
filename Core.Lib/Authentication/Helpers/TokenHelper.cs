@@ -1,12 +1,18 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Core.Lib.Authentication.Helpers
 {
     public class TokenHelper
     {
+        public TokenHelper(IConfiguration configuration)
+        {
+            
+        }
+
         public string GenerateJwtToken(string secretKey, string issuer, string audience, int expiredTimeInSec, List<Claim> claims = null)
         {
             var securityKey = new SymmetricSecurityKey(Encoding.UTF32.GetBytes(secretKey));
@@ -27,37 +33,54 @@ namespace Core.Lib.Authentication.Helpers
         {
             return Guid.NewGuid().ToString();
         }
+        
         public List<Claim> GetClaims(string token)
         {
             var jwtSecurityToken = new JwtSecurityTokenHandler().ReadJwtToken(token);
             return jwtSecurityToken.Claims.ToList();
         }
+        
         public string GetClaimType(Claim claim)
         {
             return claim.Type;
         }
+        
         public string GetClaimValue(Claim claim)
         {
             return claim.Value;
         }
-        public bool IsTokenExpired(string token)
+
+        public bool IsTokenValid(string token, TokenValidationParameters validateParameters)
         {
-            if (string.IsNullOrEmpty(token))
+            try
             {
+                new JwtSecurityTokenHandler().ValidateToken(token, validateParameters, out var validatedToken);
+                Console.WriteLine($"Token Valid : {token}\n");
                 return true;
             }
-            var jwtToken = new JwtSecurityToken(token);
-            return (jwtToken == null) || (jwtToken.ValidFrom > DateTime.UtcNow) || (jwtToken.ValidTo < DateTime.UtcNow);
+            catch (Exception e)
+            {
+                Console.WriteLine($"Token InValid : {token}\n");
+                return false;
+            }
         }
-        // public bool IsTokenValid(string token)
-        // {
-        //     var validateParameter = new TokenValidationParameters
-        //     {
-        //         ValidIssuer = "",
-        //         ValidAudience = "",
-        //         IssuerSigningKey = new SymmetricSecurityKey(),
 
-        //     };
-        // }
+        public bool IsExpired(string token)
+        {
+            try
+            {
+                var securityToken = new JwtSecurityToken(token);
+                bool isExpired = securityToken.ValidTo > DateTime.Now;
+                string message = "Un Expired";
+                if (isExpired) message = "Expired";
+                Console.WriteLine($"Token {message}. Token : {token}\n");
+                return isExpired;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Token error : {token}\n");
+                return false;
+            }
+        }
     }
 }

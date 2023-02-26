@@ -48,6 +48,11 @@ namespace Core.WebApi.Controllers
             {
                 return Unauthorized(refreshTokenResponse);
             }
+
+            if (refreshTokenResponse.Status == "Ignored")
+            {
+                return Ok(refreshTokenResponse);
+            }
             return Ok(await _authService.GetRefreshTokenAsync(tokenDto));
         }
 
