@@ -10,6 +10,7 @@ using Core.Lib.Authentication.Repository;
 using Core.Lib.Ioc;
 using Microsoft.Extensions.Configuration;
 using System.IdentityModel.Tokens.Jwt;
+using Core.Lib.Authentication.Constants;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Core.Lib.Authentication.Services
@@ -21,9 +22,9 @@ namespace Core.Lib.Authentication.Services
         private readonly AuthRepository _authRepository;
         private readonly IConfiguration _configuration;
 
-        public AuthService(IConfiguration configuration)
+        public AuthService()
         {
-            _configuration = configuration;
+            _configuration = IocContainer.Instance.GetConfiguration();
             _userService = IocContainer.Instance.Resolve<UserService>();
             _tokenHelper = IocContainer.Instance.Resolve<TokenHelper>();
             _authRepository = IocContainer.Instance.Resolve<AuthRepository>();
@@ -37,14 +38,14 @@ namespace Core.Lib.Authentication.Services
                 return await Task.FromResult(new ResponseDto
                 {
                     Message = "Register successfully",
-                    Status = "Success"
+                    Status = ResponseStatus.Success
                 });
             }
 
             return await Task.FromResult(new ResponseDto
             {
                 Message = "Register Error",
-                Status = "Failed"
+                Status = ResponseStatus.Failed
             });
         }
 
@@ -54,13 +55,13 @@ namespace Core.Lib.Authentication.Services
             {
                 return new ResponseDto
                 {
-                    Status = "Success",
+                    Status = ResponseStatus.Success,
                     Message = "Logged out successfully"
                 };
             }
             return new ResponseDto
             {
-                Status = "Failed",
+                Status = ResponseStatus.Failed,
                 Message = "Logout error"
             };
         }
@@ -92,7 +93,7 @@ namespace Core.Lib.Authentication.Services
             {
                 return new ResponseDto
                 {
-                    Status = "Failed",
+                    Status = ResponseStatus.Failed,
                     Message = "Access token not valid"
                 };
             }
@@ -101,7 +102,7 @@ namespace Core.Lib.Authentication.Services
             {
                 return new ResponseDto
                 {
-                    Status = "Ignored",
+                    Status = ResponseStatus.Ignored,
                     Message = "Access token not expired yet"
                 };
             }
@@ -112,7 +113,7 @@ namespace Core.Lib.Authentication.Services
             {
                 return new ResponseDto
                 {
-                    Status = "Failed",
+                    Status = ResponseStatus.Failed,
                     Message = "Refresh or Access Token error"
                 };
             }
@@ -124,7 +125,7 @@ namespace Core.Lib.Authentication.Services
             {
                 return new ResponseDto
                 {
-                    Status = "Failed",
+                    Status = ResponseStatus.Failed,
                     Message = "AppId problem"
                 };
             }
@@ -134,7 +135,7 @@ namespace Core.Lib.Authentication.Services
                 await RevokeAllTokenByEmailAsync(email);
                 return new ResponseDto
                 {
-                    Status = "Failed",
+                    Status = ResponseStatus.Failed,
                     Message = "Suspicious Token refresh attempt"
                 };
             }
@@ -144,7 +145,7 @@ namespace Core.Lib.Authentication.Services
             
             return new ResponseDto
             {
-                Status = "Success",
+                Status = ResponseStatus.Success,
                 Message = "Refresh token can get"
             };
         }
@@ -158,7 +159,7 @@ namespace Core.Lib.Authentication.Services
             await _authRepository.SaveTokenModelAsync(refreshTokenModel);
             
             var newTokenDto = refreshTokenModel.ToTokenDto();
-            newTokenDto.Status = "Success";
+            newTokenDto.Status = ResponseStatus.Success;
             newTokenDto.Message = "Token Generated";
 
             return newTokenDto;
@@ -192,7 +193,7 @@ namespace Core.Lib.Authentication.Services
             
             if (string.IsNullOrEmpty(logInDto.Email) || string.IsNullOrEmpty(logInDto.Password))
             {
-                response.Status = "Failed";
+                response.Status = ResponseStatus.Failed;
                 response.Message = "Email or Password not set";
                 return response;
             }
@@ -201,11 +202,11 @@ namespace Core.Lib.Authentication.Services
 
             if (canLogIn == false)
             {
-                response.Status = "Failed";
+                response.Status = ResponseStatus.Failed;
                 response.Status = "Email or Password not matched";
             }
 
-            response.Status = "Success";
+            response.Status = ResponseStatus.Success;
             response.Message = "Login Successfully";
 
             return response;

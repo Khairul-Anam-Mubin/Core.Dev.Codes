@@ -53,7 +53,8 @@ namespace Core.WebApi
             services.AddSingleton<AuthService>();
             services.AddSingleton<UserService>();
             
-            IocContainer.Instance.ServiceProvider = services.BuildServiceProvider();
+            IocContainer.Instance.SetServiceProvider(services.BuildServiceProvider());
+            IocContainer.Instance.SetConfiguration(Configuration);
             //var dbClient = IocContainer.Instance.Resolve<IMongoDbClient>("MongoDbClient");
         }
 

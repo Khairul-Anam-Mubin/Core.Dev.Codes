@@ -70,7 +70,7 @@ namespace Core.Lib.Authentication.Helpers
             try
             {
                 var securityToken = new JwtSecurityToken(token);
-                bool isExpired = securityToken.ValidTo > DateTime.UtcNow;
+                bool isExpired = securityToken.ValidTo < DateTime.UtcNow;
                 string message = "Un Expired";
                 if (isExpired) message = "Expired";
                 Console.WriteLine($"Token {message}. Token : {token}\n");

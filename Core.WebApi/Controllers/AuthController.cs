@@ -1,4 +1,5 @@
-﻿using Core.Lib.Authentication.Models;
+﻿using Core.Lib.Authentication.Constants;
+using Core.Lib.Authentication.Models;
 using Core.Lib.Authentication.Services;
 using Core.Lib.Ioc;
 using Microsoft.AspNetCore.Authorization;
@@ -24,7 +25,7 @@ namespace Core.WebApi.Controllers
         public async Task<IActionResult> LogInAsync(LogInDto loginDto)
         {
             var logInResponse = await _authService.CanLogInAsync(loginDto);
-            if (logInResponse.Status == "Failed")
+            if (logInResponse.Status == ResponseStatus.Failed)
             {
                 return Unauthorized(logInResponse);
             }
@@ -44,12 +45,12 @@ namespace Core.WebApi.Controllers
         public async Task<IActionResult> GetRefreshTokenAsync(TokenDto tokenDto)
         {
             var refreshTokenResponse = await _authService.CanGetRefreshTokenAsync(tokenDto);
-            if (refreshTokenResponse.Status == "Failed")
+            if (refreshTokenResponse.Status == ResponseStatus.Failed)
             {
                 return Unauthorized(refreshTokenResponse);
             }
 
-            if (refreshTokenResponse.Status == "Ignored")
+            if (refreshTokenResponse.Status == ResponseStatus.Ignored)
             {
                 return Ok(refreshTokenResponse);
             }

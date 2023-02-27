@@ -1,6 +1,7 @@
 using System.Composition.Convention;
 using System.Composition.Hosting;
 using System.Reflection;
+using Microsoft.Extensions.Configuration;
 
 namespace Core.Lib.Ioc
 {
@@ -11,7 +12,8 @@ namespace Core.Lib.Ioc
         private CompositionHost _container;
         private ContainerConfiguration _containerConfiguration;
         private List<string> _assemblyLists;
-        public IServiceProvider ServiceProvider { get; set; }
+        private IServiceProvider ServiceProvider { get; set; }
+        private IConfiguration Configuration { get; set; }
 
         private IocContainer()
         {
@@ -252,6 +254,21 @@ namespace Core.Lib.Ioc
             var conventions = new ConventionBuilder();
             conventions.ForType<T>().Export<TI>().Shared();
             _containerConfiguration.WithPart(typeof(T), conventions);
+        }
+
+        public IConfiguration GetConfiguration()
+        {
+            return Configuration;
+        }
+
+        public void SetConfiguration(IConfiguration configuration)
+        {
+            Configuration = configuration;
+        }
+
+        public void SetServiceProvider(IServiceProvider serviceProvider)
+        {
+            ServiceProvider = serviceProvider;
         }
     }
 }
