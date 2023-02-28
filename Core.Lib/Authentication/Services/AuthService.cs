@@ -32,16 +32,19 @@ namespace Core.Lib.Authentication.Services
 
         public async Task<ResponseDto> RegisterAsync(UserModel userModel)
         {
-            userModel.CreateGuidId();
-            if (await _userService.CreateUserAsync(userModel))
+            if (!await _userService.IsUserExist(userModel.Email))
             {
-                return await Task.FromResult(new ResponseDto
+                userModel.CreateGuidId();
+                if (await _userService.CreateUserAsync(userModel))
                 {
-                    Message = "Register successfully",
-                    Status = ResponseStatus.Success
-                });
+                    return await Task.FromResult(new ResponseDto
+                    {
+                        Message = "Register successfully",
+                        Status = ResponseStatus.Success
+                    });
+                }
             }
-
+            
             return await Task.FromResult(new ResponseDto
             {
                 Message = "Register Error",
@@ -198,7 +201,7 @@ namespace Core.Lib.Authentication.Services
                 return response;
             }
 
-            var canLogIn = await _userService.IsUserExistAsync(logInDto);
+            var canLogIn = await _userService.IsUserCanLogInAsync(logInDto);
 
             if (canLogIn == false)
             {

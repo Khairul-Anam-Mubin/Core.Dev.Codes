@@ -33,7 +33,7 @@ namespace Core.Lib.Authentication.Services
             return await _repositoryContext.SaveItemAsync(_databaseInfo, userModel);
         }
 
-        public async Task<bool> IsUserExistAsync(LogInDto logInDto)
+        public async Task<bool> IsUserCanLogInAsync(LogInDto logInDto)
         {
             var emailFilter = Builders<UserModel>.Filter.Eq("Email", logInDto.Email);
             var passwordFilter = Builders<UserModel>.Filter.Eq("Password", logInDto.Password);
@@ -43,6 +43,14 @@ namespace Core.Lib.Authentication.Services
             {
                 return true;
             }
+            return false;
+        }
+
+        public async Task<bool> IsUserExist(string email)
+        {
+            var emailFilter = Builders<UserModel>.Filter.Eq("Email", email);
+            var userModel = await _repositoryContext.GetItemByFilterDefinitionAsync(_databaseInfo, emailFilter);
+            if (userModel != null) return true;
             return false;
         }
 
