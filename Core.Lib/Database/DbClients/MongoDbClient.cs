@@ -9,7 +9,7 @@ namespace Core.Lib.Database.DbClients
     [Shared]
     public class MongoDbClient : IMongoDbClient
     {
-        private Dictionary<string, MongoClient> _dbClients = new Dictionary<string, MongoClient>();
+        private readonly Dictionary<string, MongoClient> _dbClients;
 
         public MongoDbClient()
         {

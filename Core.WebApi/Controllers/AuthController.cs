@@ -37,7 +37,7 @@ namespace Core.WebApi.Controllers
         public async Task<IActionResult> LogOutAsync(LogOutDto logOutDto)
         {
             var logOutResponse = await _authService.LogOutAsync(logOutDto);
-            return Forbid(logOutResponse.Message);
+            return Ok(logOutResponse.Message);
         }
 
         [HttpPost]
