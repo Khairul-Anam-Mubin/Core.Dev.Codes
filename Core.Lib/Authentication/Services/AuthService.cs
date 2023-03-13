@@ -11,6 +11,8 @@ using Core.Lib.Ioc;
 using Microsoft.Extensions.Configuration;
 using System.IdentityModel.Tokens.Jwt;
 using Core.Lib.Authentication.Constants;
+using Core.Lib.EmailService.Interfaces;
+using Core.Lib.EmailService.Models;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Core.Lib.Authentication.Services
@@ -21,13 +23,14 @@ namespace Core.Lib.Authentication.Services
         private readonly TokenHelper _tokenHelper;
         private readonly AuthRepository _authRepository;
         private readonly IConfiguration _configuration;
-
+        private readonly IEmailSender _emailSender;
         public AuthService()
         {
             _configuration = IocContainer.Instance.GetConfiguration();
             _userService = IocContainer.Instance.Resolve<UserService>();
             _tokenHelper = IocContainer.Instance.Resolve<TokenHelper>();
             _authRepository = IocContainer.Instance.Resolve<AuthRepository>();
+            _emailSender = IocContainer.Instance.Resolve<IEmailSender>();
         }
 
         public async Task<ResponseDto> RegisterAsync(UserModel userModel)
@@ -192,6 +195,16 @@ namespace Core.Lib.Authentication.Services
 
         public async Task<ResponseDto>CanLogInAsync(LogInDto logInDto)
         {
+            var to = new List<string> {"anam.mubin1999@gmail.com" };
+            var emailResponse = await _emailSender.SendEmailAsync(new Message
+            {
+                To = to,
+                Content = "Hello from asp net core",
+                Subject = "Testing...",
+                IsHtmlContent = false
+            });
+            Console.WriteLine($"Email Response : {emailResponse}");
+
             var response = new ResponseDto();
             
             if (string.IsNullOrEmpty(logInDto.Email) || string.IsNullOrEmpty(logInDto.Password))

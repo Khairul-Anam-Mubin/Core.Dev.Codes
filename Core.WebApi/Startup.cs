@@ -5,6 +5,8 @@ using Core.Lib.Authentication.Services;
 using Core.Lib.Database.Contexts;
 using Core.Lib.Database.DbClients;
 using Core.Lib.Database.Interfaces;
+using Core.Lib.EmailService.EmailSenders;
+using Core.Lib.EmailService.Interfaces;
 using Core.Lib.Ioc;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -48,6 +50,7 @@ namespace Core.WebApi
 
             services.AddSingleton<IMongoDbClient, MongoDbClient>();
             services.AddSingleton<IMongoDbContext, MongoDbContext>();
+            services.AddSingleton<IEmailSender, SmtpEmailSender>();
             services.AddSingleton<AuthRepository>();
             services.AddSingleton<TokenHelper>();
             services.AddSingleton<AuthService>();
