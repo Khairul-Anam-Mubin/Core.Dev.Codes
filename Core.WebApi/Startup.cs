@@ -47,7 +47,7 @@ namespace Core.WebApi
             services.AddSwaggerGen();
 
             services.AddSingleton<IMongoDbClient, MongoDbClient>();
-            services.AddSingleton<IRepositoryContext, MongoDbContext>();
+            services.AddSingleton<IMongoDbContext, MongoDbContext>();
             services.AddSingleton<AuthRepository>();
             services.AddSingleton<TokenHelper>();
             services.AddSingleton<AuthService>();

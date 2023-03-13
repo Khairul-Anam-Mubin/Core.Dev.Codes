@@ -23,7 +23,7 @@ namespace Core.ConsoleApp
 
             var mongoDbClient = IocContainer.Instance.Resolve<IMongoDbClient>("MongoDbClient");
             var dbClient = mongoDbClient.RegisterDbClient(databaseInfo);
-            IRepositoryContext mongoDbContext = IocContainer.Instance.Resolve<IRepositoryContext>("MongoDbContext");
+            var mongoDbContext = IocContainer.Instance.Resolve<IMongoDbContext>("MongoDbContext");
 
             var user = new UserModel();
             user.CreateGuidId();
@@ -37,7 +37,7 @@ namespace Core.ConsoleApp
             databaseInfo = redisDb;
             redis.RegisterDbClient(redisDb);
 
-            var redisDbContext = IocContainer.Instance.Resolve<IRepositoryContext>("RedisCacheContext");
+            var redisDbContext = IocContainer.Instance.Resolve<IRedisCacheContext>("RedisCacheContext");
             await redisDbContext.InsertItemAsync<UserModel>(redisDb, user);
             
             var redisUser = await redisDbContext.GetItemByIdAsync<UserModel>(redisDb, user.Id);
@@ -62,7 +62,7 @@ namespace Core.ConsoleApp
             var deleteId = user.GetId();
             var delete = await redisDbContext.DeleteItemByIdAsync<UserModel>(databaseInfo, deleteId);
             Console.WriteLine($"Redis Delete : {delete}");
-            var contexts = IocContainer.Instance.ResolveMany<IRepositoryContext>().ToArray();
+            var contexts = IocContainer.Instance.ResolveMany<IRedisCacheContext>().ToArray();
             Console.WriteLine($"Contexts Count {contexts.Count()}");
             foreach (var context in contexts)
             {

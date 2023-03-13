@@ -11,13 +11,13 @@ namespace Core.Lib.Authentication.Repository
     {
         private readonly DatabaseInfo _databaseInfo;
         private readonly IMongoDbClient _mongoDbClient;
-        private readonly IRepositoryContext _context;
+        private readonly IMongoDbContext _context;
 
         public AuthRepository(IConfiguration configuration)
         {
             _databaseInfo = configuration.GetSection("DatabaseInfo").Get<DatabaseInfo>();
             _mongoDbClient = IocContainer.Instance.Resolve<IMongoDbClient>("MongoDbClient");
-            _context = IocContainer.Instance.Resolve<IRepositoryContext>("MongoDbContext");
+            _context = IocContainer.Instance.Resolve<IMongoDbContext>("MongoDbContext");
             _mongoDbClient.RegisterDbClient(_databaseInfo);
         }
 

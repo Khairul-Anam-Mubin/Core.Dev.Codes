@@ -16,13 +16,13 @@ namespace Core.Lib.Authentication.Services
 {
     public class UserService
     {
-        private readonly IRepositoryContext _repositoryContext;
+        private readonly IMongoDbContext _repositoryContext;
         private readonly DatabaseInfo _databaseInfo;
         private readonly IMongoDbClient _mongoDbClient;
         
         public UserService(IConfiguration configuration)
         {
-            _repositoryContext = IocContainer.Instance.Resolve<IRepositoryContext>("MongoDbContext");
+            _repositoryContext = IocContainer.Instance.Resolve<IMongoDbContext>("MongoDbContext");
             _mongoDbClient = IocContainer.Instance.Resolve<IMongoDbClient>();
             _databaseInfo = _databaseInfo = configuration.GetSection("DatabaseInfo").Get<DatabaseInfo>();
             _mongoDbClient.RegisterDbClient(_databaseInfo);

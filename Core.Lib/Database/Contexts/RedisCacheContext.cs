@@ -7,15 +7,14 @@ using MongoDB.Driver;
 
 namespace Core.Lib.Database.Contexts
 {
-    [Export("RedisCacheContext", typeof(IRepositoryContext))]
+    [Export("RedisCacheContext", typeof(IRedisCacheContext))]
     [Shared]
-    public class RedisCacheContext : IRepositoryContext
+    public class RedisCacheContext : IRedisCacheContext
     {
         private readonly IRedisCacheClient _redisClient;
 
         public RedisCacheContext()
         {
-            //_redisClient = redisClient;
             _redisClient = IocContainer.Instance.Resolve<IRedisCacheClient>("RedisCacheClient");
         }
 
@@ -98,7 +97,7 @@ namespace Core.Lib.Database.Contexts
             }
         }
 
-        Task<T> IRepositoryContext.GetItemByFilterDefinitionAsync<T>(DatabaseInfo databaseInfo, FilterDefinition<T> filterDefinition)
+        Task<T> IRedisCacheContext.GetItemByFilterDefinitionAsync<T>(DatabaseInfo databaseInfo, FilterDefinition<T> filterDefinition)
         {
             throw new NotImplementedException();
         }

@@ -207,6 +207,7 @@ namespace Core.Lib.Authentication.Services
             {
                 response.Status = ResponseStatus.Failed;
                 response.Status = "Email or Password not matched";
+                return response;
             }
 
             response.Status = ResponseStatus.Success;

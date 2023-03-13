@@ -8,34 +8,17 @@ using Newtonsoft.Json;
 
 namespace Core.Lib.Database.Contexts
 {
-    [Export("MongoDbContext", typeof(IRepositoryContext))]
+    [Export("MongoDbContext", typeof(IMongoDbContext))]
     [Shared]
-    public class MongoDbContext : IRepositoryContext
+    public class MongoDbContext : IMongoDbContext
     {
         private readonly IMongoDbClient _mongoDbClient;
         
         public MongoDbContext()
         {
-           // _mongoDbClient = mongoDbClient;
-           _mongoDbClient = IocContainer.Instance.Resolve<IMongoDbClient>();
+            _mongoDbClient = IocContainer.Instance.Resolve<IMongoDbClient>();
         }
-        
-        public async Task<bool> InsertItemAsync<T>(DatabaseInfo databaseInfo, T item) where T : class, IRepositoryItem
-        {
-            try
-            {
-                var collection = _mongoDbClient.GetCollection<T>(databaseInfo);
-                await collection.InsertOneAsync(item);
-                Console.WriteLine($"Insert Successfully, Item : {JsonConvert.SerializeObject(item)}\n");
-                return true;
-            }
-            catch (Exception)
-            {
-                Console.WriteLine($"Problem Insert Item : {JsonConvert.SerializeObject(item)}\n");
-                return false;
-            }
-        }
-        
+
         public async Task<bool> SaveItemAsync<T>(DatabaseInfo databaseInfo, T item) where T : class, IRepositoryItem
         {
             try
@@ -55,23 +38,6 @@ namespace Core.Lib.Database.Contexts
             }
         }
 
-        public async Task<bool> UpdateItemAsync<T>(DatabaseInfo databaseInfo, T item) where T : class, IRepositoryItem
-        {
-            try
-            {
-                var collection = _mongoDbClient.GetCollection<T>(databaseInfo);
-                var filter = Builders<T>.Filter.Eq("Id", item.GetId());
-                await collection.ReplaceOneAsync(filter, item);
-                Console.WriteLine($"Successfully Update Item : {JsonConvert.SerializeObject(item)}\n");
-                return true;
-            }
-            catch (Exception)
-            {
-                Console.WriteLine($"Problem Update Item : {JsonConvert.SerializeObject(item)}\n");
-                return false;
-            }
-        }
-        
         public async Task<bool> DeleteItemByIdAsync<T>(DatabaseInfo databaseInfo, string id) where T : class, IRepositoryItem
         {
             try
@@ -80,7 +46,7 @@ namespace Core.Lib.Database.Contexts
                 var filter = Builders<T>.Filter.Eq("Id", id);
                 var res = await collection.DeleteOneAsync(filter);
                 Console.WriteLine($"Successfully Item Deleted, Id: {JsonConvert.SerializeObject(id)}\n");
-                return res == null? false : res.DeletedCount > 0;
+                return res != null && res.DeletedCount > 0;
             }
             catch (Exception)
             {
@@ -149,7 +115,7 @@ namespace Core.Lib.Database.Contexts
                 var collection = _mongoDbClient.GetCollection<T>(databaseInfo);
                 var res = await collection.DeleteManyAsync(filterDefinition);
                 Console.WriteLine($"Successfully Delete Items, count : {JsonConvert.SerializeObject(res?.DeletedCount)}\n");
-                return res == null? false : res.DeletedCount > 0;
+                return res != null && res.DeletedCount > 0;
             }
             catch (Exception e)
             {
