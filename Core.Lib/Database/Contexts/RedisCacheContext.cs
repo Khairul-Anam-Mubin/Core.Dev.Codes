@@ -96,18 +96,5 @@ namespace Core.Lib.Database.Contexts
                 return null;
             }
         }
-
-        Task<T> IRedisCacheContext.GetItemByFilterDefinitionAsync<T>(DatabaseInfo databaseInfo, FilterDefinition<T> filterDefinition)
-        {
-            throw new NotImplementedException();
-        }
-        public Task<bool> DeleteItemsByFilterDefinitionAsync<T>(DatabaseInfo databaseInfo, FilterDefinition<T> filterDefinition) where T : class, IRepositoryItem
-        {
-            throw new NotImplementedException();
-        }
-        public Task<bool> SaveItemAsync<T>(DatabaseInfo databaseInfo, T item) where T : class, IRepositoryItem
-        {
-            throw new NotImplementedException();
-        }
     }
 }
